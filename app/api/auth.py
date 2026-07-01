@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.core.oauth import oauth
 from app.core.database import get_db
 from app.models.user import User
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -51,7 +52,7 @@ async def callback(req: Request, session: AsyncSession = Depends(get_db)):
     req.session["user_id"] = str(user.id)
 
     return RedirectResponse(
-        url="http://localhost:3000/dashboard",
+        url=f"{settings.frontend_url}/dashboard",
         status_code=302
     )
 
@@ -120,7 +121,7 @@ async def github_install_callback(req: Request, session: AsyncSession = Depends(
     await session.commit()
 
     return RedirectResponse(
-        url="http://localhost:3000/dashboard",
+        url=f"{settings.frontend_url}/dashboard",
         status_code=302,
     )
 

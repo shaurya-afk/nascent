@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     github_private_key_path: str = Field(alias="GITHUB_PRIVATE_KEY_PATH")
 
     secret_key: str = Field(alias="SECRET_KEY")
+    frontend_url: str = Field(alias="FRONTEND_URL")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

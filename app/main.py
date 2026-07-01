@@ -11,7 +11,7 @@ app = FastAPI(title="nascent api")
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.secret_key,
-    same_site="lax",
+    same_site="none",
     https_only=False, # change this to True when deploying...
     max_age=60 * 60 * 24 * 7
 )

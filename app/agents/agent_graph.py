@@ -22,6 +22,7 @@ class AgentGraph:
         self.g.add_node("diff_hitl", self.node.diff_hitl)
         self.g.add_node("git_commit", self.node.git_commit)
         self.g.add_node("git_push", self.node.git_push)
+        self.g.add_node("cleanup", self.node.clean_workspace)
 
         self.g.add_edge(START, "load_repo")
 
@@ -54,6 +55,8 @@ class AgentGraph:
         })
 
         self.g.add_edge("git_commit", "git_push")
-        self.g.add_edge("git_push", END)
+        self.g.add_edge("git_push", "cleanup")
+
+        self.g.add_edge("cleanup", END)
 
         return self.g

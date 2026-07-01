@@ -111,3 +111,27 @@ class GitHubService:
         data = response.json()
 
         return data["html_url"]
+    
+    async def check_repo_access(self, installation_token: str, owner: str, repo: str) -> bool:
+        url = f"https://api.github.com/repos/{owner}/{repo}"
+
+        headers = {
+            "Authorization": f"Bearer {installation_token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url,
+                headers=headers
+            )
+
+        if response.status_code == 200:
+            return True
+        
+        if response.status_code == 404:
+            return False
+        
+        response.raise_for_status()
+        return False

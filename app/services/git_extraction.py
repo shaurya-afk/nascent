@@ -153,8 +153,8 @@ class GitExtraction:
 
         return summaries
 
-    def _cleanup(self):
-        shutil.rmtree(self.workspace, ignore_errors=True)
+    def _cleanup(self, workspace: str):
+        shutil.rmtree(workspace, ignore_errors=True)
 
     async def pipeline(self):
         try:
@@ -193,7 +193,7 @@ class GitExtraction:
 
             print("🎉 Pipeline ran successfully!\n")
         except Exception as e:
-            raise RuntimeError(f"❌ Something went wrong!\n{e}")
+            raise RuntimeError("❌ Something went wrong!") from e
 
         return {
             "extraction": "success",

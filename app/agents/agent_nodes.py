@@ -7,6 +7,7 @@ from app.services.llm import call_llm
 from app.models.user import User
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
+from fastapi import HTTPException
 from langgraph.types import interrupt
 from pathlib import Path
 from textwrap import dedent
@@ -18,10 +19,44 @@ import uuid
 class AgentNodes:
     def __init__(self, session_factory: async_sessionmaker) -> None:
         self.repo_service = RepositoryService()
-        # self.db = db
         self.session_factory = session_factory
 
+    async def _check_repo_access(self, state: AgentState) -> None:
+        async with self.session_factory() as db:
+            user = await db.scalar(
+                select(User).where(
+                    User.id == state["user_id"]
+                )
+            )
+
+        if user is None:
+            raise ValueError("user not found")
+
+        if user.github_installation_id is None:
+            raise ValueError("github app is not connected")
+
+        github = GitHubService()
+
+        installation_token = await github.get_installation_token(user.github_installation_id)
+
+        parsed = urlparse(state["repo_url"])
+        owner, repo = parsed.path.strip("/").split("/")
+        repo = repo.removesuffix(".git")
+
+        has_access = await github.check_repo_access(installation_token, owner, repo)
+
+        if not has_access:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error":"repo_access_denied",
+                    "message":"github app is not installed for this repo."
+                }
+            )
+                
     async def clone_repo(self, state: AgentState):
+        await self._check_repo_access(state)
+        
         async with self.session_factory() as db:
             git = GitExtraction(state["repo_url"], db)
             git._clone_repo()
@@ -487,6 +522,38 @@ class AgentNodes:
 
         if user is None:
             raise ValueError("user not found")
+
+        if user.github_installation_id is None:
+            raise ValueError("github app is not connected")
+
+        github = GitHubService()
+
+        installation_token = await github.get_installation_token(user.github_installation_id)
+
+        parsed = urlparse(state["repo_url"])
+        owner, repo = parsed.path.strip("/").split("/")
+        repo = repo.removesuffix(".git")
+
+        has_access = await github.check_repo_access(installation_token, owner, repo)
+
+        if not has_access:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error":"repo_access_denied",
+                    "message":"github app is not installed for this repo."
+                }
+            )
+
+        async with self.session_factory() as db:
+            user = await db.scalar(
+                select(User).where(
+                    User.id == state["user_id"]
+                )
+            )
+
+        if user is None:
+            raise ValueError("user not found")
         
         if user.github_installation_id is None:
             raise ValueError("github app is not connected")
@@ -530,3 +597,10 @@ class AgentNodes:
             "branch_name": branch_name,
             "pull_request_url": pr_url,
         }
+    
+    async def clean_workspace(self, state: AgentState):
+        workspace = state["workspace"]
+        
+        async with self.session_factory() as db:
+            git = GitExtraction(state["repo_url"], db)
+            git._cleanup(workspace)

@@ -23,7 +23,7 @@ class AgentNodes:
 
     async def clone_repo(self, state: AgentState):
         async with self.session_factory() as db:
-            git = GitExtraction(state["repo_url"], self.session_factory)
+            git = GitExtraction(state["repo_url"], db)
             git._clone_repo()
 
             return {"workspace": git.workspace}
@@ -55,7 +55,7 @@ class AgentNodes:
 
     async def run_repo_extraction(self, state: AgentState):
         async with self.session_factory() as db:
-            git_service = GitExtraction(state["repo_url"], self.session_factory)
+            git_service = GitExtraction(state["repo_url"], db)
             res = await git_service.pipeline()
 
         return {"summaries": res["summary"], "workspace": res["workspace"]}

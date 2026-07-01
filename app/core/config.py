@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     github_app_id: int = Field(alias="GITHUB_APP_ID")
     github_client_id: str = Field(alias="GITHUB_CLIENT_ID")
     github_client_secret: str = Field(alias="GITHUB_CLIENT_SECRET")
-    github_private_key_path: str = Field(alias="GITHUB_PRIVATE_KEY_PATH")
+    github_private_key: str = Field(alias="GITHUB_PRIVATE_KEY")
 
     secret_key: str = Field(alias="SECRET_KEY")
     frontend_url: str = Field(alias="FRONTEND_URL")

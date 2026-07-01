@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, UTC
-from pathlib import Path
 import jwt
 import httpx
 
@@ -7,7 +6,7 @@ from app.core.config import settings
 
 class GitHubService:
     def generate_jwt(self) -> str:
-        private_key = Path(settings.github_private_key_path).read_text(encoding='utf-8')
+        private_key = settings.github_private_key
 
         now = datetime.now(UTC)
 

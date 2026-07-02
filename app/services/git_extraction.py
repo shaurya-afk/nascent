@@ -20,14 +20,25 @@ class GitExtraction:
         "build",
     }
 
-    def __init__(self, url: str, session) -> None:
+    def __init__(self, url: str, session, token: str | None = None) -> None:
         self.workspace = tempfile.mkdtemp()
         self.url = url
         self.session = session
+        self.token = token
+
+    def _build_clone_url(self) -> str:
+        if self.token and self.url.startswith("https://"):
+            return self.url.replace(
+                "https://",
+                f"https://x-access-token:{self.token}@",
+                1,
+            )
+        return self.url
 
     def _clone_repo(self):
+        clone_url = self._build_clone_url()
         try:
-            Repo.clone_from(self.url, self.workspace)
+            Repo.clone_from(clone_url, self.workspace)
         except Exception as e:
             raise Exception(f"Failed to clone the git repo: {self.url}\n{e}")
 

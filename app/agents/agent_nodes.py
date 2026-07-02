@@ -54,11 +54,27 @@ class AgentNodes:
                 }
             )
                 
+    async def _get_installation_token(self, state: AgentState) -> str | None:
+        """Obtain a GitHub App installation token for the current user."""
+        async with self.session_factory() as db:
+            user = await db.scalar(
+                select(User).where(User.id == state["user_id"])
+            )
+
+        if user is None or user.github_installation_id is None:
+            return None
+
+        github = GitHubService()
+        return await github.get_installation_token(user.github_installation_id)
+
     async def clone_repo(self, state: AgentState):
         await self._check_repo_access(state)
-        
+
+        # Obtain installation token for private repo cloning
+        token = await self._get_installation_token(state)
+
         async with self.session_factory() as db:
-            git = GitExtraction(state["repo_url"], db)
+            git = GitExtraction(state["repo_url"], db, token=token)
             git._clone_repo()
 
             return {"workspace": git.workspace}
@@ -89,8 +105,11 @@ class AgentNodes:
         return {"repo_cached": True, "repo_id": repo.id, "summaries": summaries}
 
     async def run_repo_extraction(self, state: AgentState):
+        # Obtain installation token for private repo cloning
+        token = await self._get_installation_token(state)
+
         async with self.session_factory() as db:
-            git_service = GitExtraction(state["repo_url"], db)
+            git_service = GitExtraction(state["repo_url"], db, token=token)
             res = await git_service.pipeline()
 
         return {"summaries": res["summary"], "workspace": res["workspace"]}

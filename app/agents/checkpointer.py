@@ -6,18 +6,13 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from app.core.config import settings
 
-_conn = None
-_checkpointer = None
 
 async def get_checkpointer():
-    global _conn, _checkpointer
+    url = settings.alembic_database_url.replace("+psycopg", "")
 
-    if _checkpointer is None:
-        url = settings.alembic_database_url.replace("+psycopg", "")
+    conn = await AsyncConnection.connect(url, autocommit=True, row_factory=dict_row)
+    checkpointer = AsyncPostgresSaver(conn)
 
-        _conn = await AsyncConnection.connect(url, autocommit=True, row_factory=dict_row)
-        _checkpointer = AsyncPostgresSaver(_conn)
+    await checkpointer.setup()
 
-        await _checkpointer.setup()
-
-    return _checkpointer
+    return checkpointer

@@ -120,6 +120,19 @@ class AgentNodes:
         return "extract"
 
     async def planner(self, state: AgentState):
+        planner_feedback = ""
+        if state.get("planner_feedback"):
+            planner_feedback = dedent(f"""
+                ## Previous Plan Rejection Feedback
+
+                The previous plan was rejected.
+
+                Feedback:
+                {state["planner_feedback"]}
+
+                Regenerate the plan addressing this feedback.
+            """)
+
         prompt = f"""
         You are an expert software architect.
 
@@ -127,6 +140,7 @@ class AgentNodes:
 
         Your task is to analyze the user's request against the repository summary and produce an execution plan for downstream agents.
 
+        {planner_feedback}
         ## User Request
 
         {state["user_query"]}
@@ -258,7 +272,7 @@ class AgentNodes:
             return {"plan_approved": True, "planner_feedback": None}
 
         if action == "reject":
-            return {"plan_approved": False, "planner_feedback": response["feedback"]}
+            return {"plan_approved": False, "planner_feedback": response.get("feedback")}
 
     def route_plan(self, state: AgentState):
         if state["plan_approved"]:

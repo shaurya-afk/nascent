@@ -49,18 +49,20 @@ class GitService:
         origin.set_url(url)
 
     def build_authenticated_url(self, installation_token: str) -> str:
-        origin_url = self.get_origin_url()
+        installation_token = installation_token.strip()
 
+        origin_url = self.get_origin_url()
         prefix = "https://"
 
         if not origin_url.startswith(prefix):
             raise ValueError("only https remotes are supported.")
         
-        return self.original_origin_url.replace(
-            prefix,
-            f"https://x-access-token:{installation_token}@",
-            1,
-        )
+        remainder = origin_url[len(prefix):]
+
+        if "@" in remainder:
+            remainder = remainder.split("@", 1)[1]
+
+        return f"{prefix}x-access-token:{installation_token}@{remainder}"
     
     def create_branch(self, branch_name: str):
         self.repo.git.checkout("-b", branch_name)
@@ -69,6 +71,10 @@ class GitService:
         original = self.original_origin_url
 
         authenticated = self.build_authenticated_url(installation_token)
+
+        print(repr(original))
+        print(repr(authenticated))
+        print(repr(installation_token))
 
         try:
             self.set_origin_url(authenticated)

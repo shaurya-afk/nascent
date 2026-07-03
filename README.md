@@ -451,7 +451,10 @@ uvicorn app.main:app --reload
 
 # Screenshots
 
-> Coming Soon
+<p align="center">
+  <img src="./assets/screenshot.png" alt="Nascent Screenshot" width="100%">
+</p>
+
 
 - Repository Analysis
 - Planning Interface
